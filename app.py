@@ -1,3 +1,4 @@
+import torch
 import gradio as gr
 from transformers import pipeline
 
@@ -54,3 +55,4 @@ iface = gr.Interface(
 
 if __name__ == "__main__":
     iface.launch()
+
