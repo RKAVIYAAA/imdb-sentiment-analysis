@@ -24,9 +24,13 @@ def plot_distribution():
     pos = sum(1 for r in review_list if r["Sentiment"] == "POSITIVE")
     neg = sum(1 for r in review_list if r["Sentiment"] == "NEGATIVE")
     neu = len(review_list) - pos - neg
+    total = pos + neg + neu
     fig, ax = plt.subplots()
-    colors = ["#4CAF50", "#F44336", "#FFC107"]
-    ax.pie([pos, neg, neu], labels=["Positive 😊", "Negative 😠", "Neutral 😐"], colors=colors, autopct='%1.1f%%')
+    if total == 0:
+        ax.text(0.5, 0.5, "No data available", horizontalalignment='center', verticalalignment='center', fontsize=14)
+    else:
+        colors = ["#4CAF50", "#F44336", "#FFC107"]
+        ax.pie([pos, neg, neu], labels=["Positive 😊", "Negative 😠", "Neutral 😐"], colors=colors, autopct='%1.1f%%')
     ax.set_title("Sentiment Distribution")
     return fig
 
@@ -62,3 +66,6 @@ with gr.Blocks(theme="dark", css=custom_css) as demo:
 
 if __name__ == "__main__":
     demo.launch(share=True)
+
+    demo.launch(share=True)
+
