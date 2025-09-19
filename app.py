@@ -1,83 +1,64 @@
 import torch
 import gradio as gr
 from transformers import pipeline
+import matplotlib.pyplot as plt
 
 # Load Hugging Face sentiment analysis pipeline
 sentiment_pipeline = pipeline("sentiment-analysis")
 
+# Store reviews and sentiment
+review_list = []
+
 def predict_sentiment(review_text):
     result = sentiment_pipeline(review_text)
-    return result[0]['label']
+    sentiment = result[0]['label']
+    # Append the review and sentiment to the list
+    review_list.append({
+        "Review": review_text,
+        "Sentiment": sentiment,
+        "Emoji": "😊" if sentiment == "POSITIVE" else "😠"
+    })
+    return sentiment
+
+def plot_distribution():
+    pos = sum(1 for r in review_list if r["Sentiment"] == "POSITIVE")
+    neg = sum(1 for r in review_list if r["Sentiment"] == "NEGATIVE")
+    neu = len(review_list) - pos - neg
+    fig, ax = plt.subplots()
+    colors = ["#4CAF50", "#F44336", "#FFC107"]
+    ax.pie([pos, neg, neu], labels=["Positive 😊", "Negative 😠", "Neutral 😐"], colors=colors, autopct='%1.1f%%')
+    ax.set_title("Sentiment Distribution")
+    return fig
+
+def get_review_table():
+    # Return recent reviews as a table
+    return [[r["Review"], r["Sentiment"], r["Emoji"]] for r in review_list[-6:]]
 
 custom_css = """
-/* Background and font */
-body {
-    background-color: #f0f8ff;  /* Light blue background */
-    font-family: 'Arial', sans-serif;
-}
-
-/* Customize Gradio buttons */
-.gr-button {
-    background-color: #ff4500; /* Orange-red */
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    border-radius: 10px;
-    border: none;
-    padding: 10px 25px;
-}
-
-/* Input and output boxes */
-.gr-input textarea, .gr-output textarea {
-    font-size: 18px;
-    color: #333333; /* Dark grey text */
-    background-color: #fff8dc; /* Light beige background */
-    border-radius: 8px;
-    border: 2px solid #ff4500; /* Same accent color */
-}
-
-/* Title style */
-h1, h2, h3 {
-    font-family: 'Verdana', Geneva, Tahoma, sans-serif;
-    color: #004080;  /* Navy blue */
-}
+body {background: linear-gradient(90deg, #30343F 70%, #FFFCF9 100%);}
+.gradio-container {color: #F8CB2E;}
+h1,h2,h3 {color:#F8CB2E;}
+.gr-button {background-color:#30343F; color:#F8CB2E; font-size:18px;}
 """
 
-# Add JavaScript for confetti 🎉
-custom_js = """
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-<script>
-function throwConfetti() {
-    confetti({
-        particleCount: 200,
-        spread: 100,
-        origin: { y: 0.6 }
-    });
-}
-setTimeout(() => {
-    const btn = document.querySelector("button");
-    if (btn) {
-        btn.addEventListener("click", throwConfetti);
-    }
-}, 1000);
-</script>
-"""
-
-iface = gr.Interface(
-    fn=predict_sentiment,
-    inputs=gr.Textbox(label="Your Movie Review", placeholder="E.g. This film was amazing!", lines=2),
-    outputs=gr.Textbox(label="Sentiment"),
-    title="🎬 IMDb Review Sentiment Analyzer",
-    description="⭐ Enter your review and discover if it's POSITIVE or NEGATIVE!",
-    css=custom_css + custom_js,  # Inject custom JS + CSS
-    allow_flagging="never"
-)
+with gr.Blocks(theme="dark", css=custom_css) as demo:
+    gr.Markdown("# 🎬 **CineSense Movie Review Analytics Dashboard**")
+    gr.Markdown("Monitor your movie review sentiment analysis 🔍✨")
+    with gr.Row():
+        with gr.Column():
+            inp = gr.Textbox(label="📥 Your Movie Review", placeholder="E.g. This film was amazing!", lines=2)
+            submit_btn = gr.Button("Submit")
+            out = gr.Textbox(label="🔎 Sentiment")
+        with gr.Column():
+            chart = gr.Plot(plot_distribution, label="Sentiment Distribution")
+    with gr.Row():
+        gr.Markdown("### 📝 Recent Reviews")
+        review_table = gr.Dataframe(get_review_table, headers=["Review", "Sentiment", "Emoji"], label="Recent Reviews")
+    submit_btn.click(predict_sentiment, inputs=inp, outputs=out).then(
+        lambda: None, None, chart
+    ).then(
+        lambda: None, None, review_table
+    )
 
 if __name__ == "__main__":
-    iface.launch()
-
-
-if __name__ == "__main__":
-    iface.launch()
-
-
+    demo.launch(share=True)
