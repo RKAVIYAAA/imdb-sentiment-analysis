@@ -43,16 +43,41 @@ h1, h2, h3 {
 }
 """
 
+# Add JavaScript for confetti 🎉
+custom_js = """
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+function throwConfetti() {
+    confetti({
+        particleCount: 200,
+        spread: 100,
+        origin: { y: 0.6 }
+    });
+}
+setTimeout(() => {
+    const btn = document.querySelector("button");
+    if (btn) {
+        btn.addEventListener("click", throwConfetti);
+    }
+}, 1000);
+</script>
+"""
+
 iface = gr.Interface(
     fn=predict_sentiment,
     inputs=gr.Textbox(label="Your Movie Review", placeholder="E.g. This film was amazing!", lines=2),
     outputs=gr.Textbox(label="Sentiment"),
     title="🎬 IMDb Review Sentiment Analyzer",
     description="⭐ Enter your review and discover if it's POSITIVE or NEGATIVE!",
-    css=custom_css,
-    allow_flagging="never"  # Disable flagging to avoid .gradio folder creation
+    css=custom_css + custom_js,  # Inject custom JS + CSS
+    allow_flagging="never"
 )
 
 if __name__ == "__main__":
     iface.launch()
+
+
+if __name__ == "__main__":
+    iface.launch()
+
 
