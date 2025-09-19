@@ -1,6 +1,7 @@
 gradio
 transformers
 torch
+matplotlib
 
 
 
